@@ -1,5 +1,5 @@
 const axios = require('axios')
-const {googleMapsAPI, darkSkyAPI} = require('../env.json')
+const {googleAPI, darkSkyAPI} = require('../env.json')
 
 
 let getLocation = (address) => {
@@ -25,7 +25,17 @@ let getWeather = ({location, lat, lng}) => {
   })
 }
 
+let getWeatherCommand = (address, command) => {
+  return getLocation(address)
+  .then(locationObj => {
+    return getWeather(locationObj)
+  })
+  .then(tempData => {
+    return `The temperature in ${tempData[0]} is ${command === 'wc' ? `${((tempData[1]-32)*(5/9)).toFixed(2)}˚ Celcius` : `${tempData[1]}˚ Farenheit`}`
+  })
+} 
+
+
 module.exports = {
-  getLocation,
-  getWeather
+  getWeatherCommand
 }

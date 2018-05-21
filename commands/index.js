@@ -1,13 +1,10 @@
 const fs = require('fs')
-const path = require('path');
-const chalk = require('chalk')
+const {prefix, modPrefix} = require('../env.json')
 
 const Discord = require('discord.js')
 const client = new Discord.Client()
 
 client.commands = new Discord.Collection();
-
-const {prefix, modPrefix} = require('../env.json')
 
 const commands = fs.readdirSync(__dirname).filter(e => e != 'index.js')
 
@@ -23,15 +20,21 @@ client.on('message', message => {
   if ((!message.content.startsWith(prefix) && !message.content.startsWith(modPrefix)) || message.author.bot) return
 
   const args = message.content.slice(prefix.length).split(/ +/)
-  const commandName = args.shift().toLowerCase();
+  const commandName = args.shift().toLowerCase()
 
-  if(!client.commands.has(commandName)) return
+  const command = client.commands.get(commandName) || client.commands.find(command => command.aliases && command.aliases.includes(commandName))
 
-  const command = client.commands.get(commandName);
+  if(!command) return
 
   if(command.args && !args.length) {
-    return message.reply('You didnt provide any arguments idiot')
+    let reply = 'You didnt provide any arguments.'
+    if (command.usage) {
+      reply += `\n\nUSAGE: ${command.usage}`
+    }
+    return message.reply(reply)
   }
+
+  message.channel.startTyping()
 
   try {
     command.execute(message, args, commandName)
@@ -41,6 +44,8 @@ client.on('message', message => {
     console.error(err)
     message.reply('There was an error executing that command')
   }
+
+  message.channel.stopTyping()
   
 })
 
